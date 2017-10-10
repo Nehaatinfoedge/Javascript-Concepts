@@ -114,4 +114,3 @@ setName:  function(n) {this._name  = n;}
 var product1 = Object.create(Product);
 
 console.log(product1.proto)
-
