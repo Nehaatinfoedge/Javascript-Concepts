@@ -1,0 +1,228 @@
+
+<!DOCTYPE HTML>
+<html>
+<head>
+<style>
+.sugLi{border: 1px solid #cdd5e3;display: inline-block;margin: 5px 5px 0 0;position: relative;vertical-align: middle;}
+.tokenize ul{position: relative;
+    list-style: none;
+    padding: 0 0 5px 5px;
+    height: auto;
+    min-height: 34px;
+    cursor: text;
+
+}
+.tokenize ul li {border: 1px solid #cdd5e3;
+    display: inline-block;
+    margin: 5px 5px 0 0;
+    position: relative;
+    vertical-align: middle;}
+.token{border: 1px solid #cdd5e3;
+    display: inline-block;
+    margin: 5px 5px 0 0;
+    position: relative;
+    vertical-align: middle;
+    padding: 0 1.2em 0 5px;
+    background-color: #eff2f7;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px; 
+}
+.dismiss{    position: absolute;
+    right: 5px;
+    color: #a9b9d8;
+    text-decoration: none;
+    cursor: pointer;}
+.frmCtrl{
+    display: block;
+    width: 100%;
+    padding: .5rem .75rem;
+    font-size: 1rem;
+    line-height: 1.25;
+    color: #464a4c;
+    background-color: #fff;
+    background-image: none;
+    -webkit-background-clip: padding-box;
+    background-clip: padding-box;
+    border: 1px solid rgba(0,0,0,.15);
+    border-radius: .25rem;
+    -webkit-transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+    -o-transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s;
+    transition: border-color ease-in-out .15s,box-shadow ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;
+}
+</style>
+<script src="jquery-2.1.4.min.js" type="text/javascript"></script>
+<script src="suggest.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+$(function(){
+    $('input.suggest').suggest({minComplete: 1, words:[
+        'January',
+        'February',
+        'March',
+        'April',
+        'May',
+        'June',
+        'July',
+        'August',
+        'September',
+        'October',
+        'November',
+        'December'
+    ]});
+
+    var that = $('input.suggester')
+        ,   box = $('<ul></ul>')
+            .css({
+                position: 'absolute',
+                backgroundColor: 'white',
+                border: '1px solid #999',
+                paddingLeft: '0px',
+                paddingRight: '0px',
+                margin: 0,
+                paddingTop: '3px',
+                paddingBottom: '3px',
+                listStyleType: 'none',
+                minWidth: that.width() + 4,
+                color: '#555',
+                textAlign: 'left'
+            })
+            .hide()
+            .appendTo('body')
+        ,   wordsJson = ['January','February','March','April','May','June','July','August','September','October','November','December']
+        ,   enteredValue = that.val()
+        ,   to_complete = enteredValue.split(' ').pop().toLowerCase()
+        ,   selection
+        ,   length
+        ,   active = false
+        ,   hide = function(){
+                box.hide();
+                active = false;
+            }
+        ,   show = function(){
+                var offset = that.offset();
+                box.css({
+                    top: offset.top + that.height() + 7,
+                    left: offset.left
+                }).empty().show();
+                selection = null;
+                active = true;
+            }
+        ,   arrow_up = 38
+        ,   arrow_down = 40
+        ,   enter = 13
+        ,   tab = 9
+        ,   esc = 27
+        ,   boldString = function (str, find){
+                var re = new RegExp(find, 'g');
+                return str.replace(re, '<b>'+find+'</b>');
+            };
+    $('.tokenize .token-search input.suggester').keyup(function(event) {
+        enteredValue = that.val();
+        to_complete = enteredValue.split(' ').pop().toLowerCase()
+        if(to_complete.length >= 1){
+            var suggestions = $.grep(wordsJson, function(word, i){
+                return word.toLowerCase().indexOf(to_complete.toLowerCase()) !== -1 
+            });
+            if(suggestions.length){
+                selection = null;
+                length = suggestions.length;
+                show()
+                $.each(suggestions, function(i, suggestion){
+                    var postfix = suggestion.slice(to_complete.length, suggestion.length);
+                    var text = enteredValue + postfix;
+                    //$('<li>' + enteredValue + '<em style="color: black">' + postfix + '</em>' + '</li>')
+                    $('<li><em style="color: black">' + boldString(suggestion,enteredValue) + '</em></li>')
+                        .css({
+                            paddingleft: 0,
+                            paddingRight: 0,
+                            margin: 0,
+                            paddingLeft: '5px',
+                            paddingRight: '5px',
+                            cursor: 'pointer'
+                        })
+                        .data('text', suggestion)
+                        .hover(
+                            function(){
+                                $(this).css('background-color', 'LightBlue');
+                            },
+                            function(){
+                                $(this).css('background-color', 'transparent');
+                            }
+                        )
+                        .click(function(){
+                            hide()
+                            var html = '<li class="token" data-value="1"><a class="dismiss">×</a><span>'+suggestion+'</span></li>';
+                            if(that.parent().parent().find('li').length>1)
+                                that.parent().parent().find('> li:nth-last-child(1)').before(html).focus();
+                            else
+                                that.parent().parent().prepend(html).focus();
+                        })
+                        .appendTo(box)
+                });
+            }
+            else
+            {
+                hide();
+            }
+        }
+        else {
+            hide();
+        }
+
+
+        var keyhandler = function(event){
+            if(active){
+                if(event.keyCode == arrow_down || event.keyCode == arrow_up){
+                    if(selection == null){
+                        selection = event.keyCode == arrow_down ? 0 : length-1;
+                    }
+                    else{
+                        selection += event.keyCode == arrow_down ? 1 : -1;
+                        if(selection < 0){
+                            selection = length - 1;
+                        }
+                        else if(selection >= length){
+                            selection = 0;
+                        }
+                    }
+                    var text = box.find('li')
+                        .css('background-color', 'transparent')
+                        .eq(selection)
+                            .css('background-color', 'LightBlue')
+                            .data('text');
+                    that.val(text);
+                    return false;
+                }
+                else if(event.keyCode == enter){
+                    that.val(
+                        box.hide().find('li').eq(selection).data('text')
+                    );
+                }
+                else if(event.keyCode == tab || event.keyCode == esc){
+                    hide();
+                }
+            }
+        };
+        if(navigator.userAgent.search("safari") !== -1){
+            that.keydown(keyhandler);
+        }
+        else{
+            that.keypress(keyhandler);
+        }
+    });
+
+});
+
+</script>
+</head>
+<body>
+<h1>Suggester</h1>
+<!--<input class="suggest" autocomplete="off"/>-->
+<!-- <input class="suggester" /> -->
+
+<div class="tokenize sortable"><ul class="frmCtrl" tabindex="0"><li class="token-search" style="width: 20px;"><input class="suggester" /></li></ul></div>
+</body>
+</html>
